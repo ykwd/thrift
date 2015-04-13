@@ -1,7 +1,9 @@
 #include "t_rdsn_generator.h"
+#include "platform.h"
 #include <algorithm>
 #include <string>
 #include <iostream>
+#include <exception>
 
 t_rdsn_generator::t_rdsn_generator(t_program* program,
                     const std::map<std::string, std::string>& parsed_options,
@@ -23,7 +25,7 @@ void t_rdsn_generator::close_generator()
 void t_rdsn_generator::init_generator()
 {
     // Make output directory
-    mkdir(get_out_dir().c_str());
+    MKDIR(get_out_dir().c_str());
 
     std::string f_php_name = get_out_dir() + program_name_ + ".php";
     _f_php.open(f_php_name.c_str());
@@ -74,7 +76,7 @@ std::string t_rdsn_generator::get_full_type_name(t_type* ttype)
         }
         else
         {
-            throw new std::exception("unknown container type");
+            throw std::string("unknown container type:") + ttype->get_name();
         }
     }
     else
@@ -120,7 +122,7 @@ void t_rdsn_generator::generate_service(t_service* svc)
 }
 
 /* register this generator with the main program */
-THRIFT_REGISTER_GENERATOR(rdsn, "C++ - based on rDSN", 
-    "    Use 'Robust Distributed System Nucleus(rDSN)' instead of Thrift as runtime.\n"
-    "    use_thrift:      use thrift for data marshall/unmarshall (false by default).\n"
+THRIFT_REGISTER_GENERATOR(rdsn, "rDSN", 
+    "    Generate service type and defintion file (.php) for project \n"
+    "    'Robust Distributed System Nucleus (rDSN)'.\n"
     )
