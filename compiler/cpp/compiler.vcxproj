@@ -23,6 +23,7 @@
     <ClInclude Include="src\generate\t_generator_registry.h" />
     <ClInclude Include="src\generate\t_oop_generator.h" />
     <ClInclude Include="src\generate\t_html_generator.h" />
+    <ClInclude Include="src\generate\t_rdsn_generator.h" />
     <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\main.h" />
     <ClInclude Include="src\md5.h" />
@@ -74,6 +75,7 @@
     <ClCompile Include="src\generate\t_php_generator.cc" />
     <ClCompile Include="src\generate\t_py_generator.cc" />
     <ClCompile Include="src\generate\t_rb_generator.cc" />
+    <ClCompile Include="src\generate\t_rdsn_generator.cc" />
     <ClCompile Include="src\generate\t_st_generator.cc" />
     <ClCompile Include="src\generate\t_xsd_generator.cc" />
     <ClCompile Include="src\main.cc" />

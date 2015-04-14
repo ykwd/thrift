@@ -78,6 +78,9 @@
     <ClInclude Include="src\windows\version.h">
       <Filter>windows</Filter>
     </ClInclude>
+    <ClInclude Include="src\generate\t_rdsn_generator.h">
+      <Filter>generate</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="windows">
@@ -177,6 +180,9 @@
       <Filter>generate</Filter>
     </ClCompile>
     <ClCompile Include="src\generate\t_lua_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_rdsn_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
   </ItemGroup>
