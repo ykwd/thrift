@@ -43,7 +43,7 @@ void t_rdsn_generator::init_generator()
         _f_php << "$_PROG->includes[$tmp->name] = $tmp;" << std::endl;
         for (auto& nm : ic->get_namespaces())
         {
-            _f_php << "tmp->namespaces[\"" << nm.first << "\"] = \"" << nm.second << "\";" << std::endl;
+            _f_php << "$tmp->namespaces[\"" << nm.first << "\"] = \"" << nm.second << "\";" << std::endl;
         }
         _f_php << std::endl;
     }
