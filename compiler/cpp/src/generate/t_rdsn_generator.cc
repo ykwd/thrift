@@ -64,7 +64,8 @@ std::string t_rdsn_generator::get_full_type_name(t_type* ttype)
     if (ttype->is_container()) {
         if (ttype->is_map()) {
             t_map* tmap = (t_map*)ttype;
-            return std::string("map< ") + get_full_type_name(tmap->get_key_type()) + ">";
+            return std::string("map< ") + get_full_type_name(tmap->get_key_type())
+                + ", " + get_full_type_name(tmap->get_val_type()) + ">";
         }
         else if (ttype->is_set()) {
             t_set* tset = (t_set*)ttype;
