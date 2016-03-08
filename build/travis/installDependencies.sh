@@ -30,14 +30,14 @@ sudo apt-get install -qq ant openjdk-7-jdk
 sudo update-java-alternatives -s java-1.7.0-openjdk-amd64
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-twisted
 
 # Ruby dependencies
 sudo apt-get install -qq ruby ruby-dev
 sudo gem install bundler rake
 
 # Perl dependencies
-sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
+sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl libio-socket-ssl-perl libnet-ssleay-perl libcrypt-ssleay-perl
 
 # Php dependencies
 sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c

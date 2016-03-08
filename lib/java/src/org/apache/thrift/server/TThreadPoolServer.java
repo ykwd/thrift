@@ -70,6 +70,11 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
+    public Args stopTimeoutVal(int n) {
+      stopTimeoutVal = n;
+      return this;
+    }
+
     public Args requestTimeout(int n) {
       requestTimeout = n;
       return this;
@@ -130,7 +135,7 @@ public class TThreadPoolServer extends TServer {
       new SynchronousQueue<Runnable>();
     return new ThreadPoolExecutor(args.minWorkerThreads,
                                   args.maxWorkerThreads,
-                                  60,
+                                  args.stopTimeoutVal,
                                   TimeUnit.SECONDS,
                                   executorQueue);
   }
@@ -290,22 +295,19 @@ public class TThreadPoolServer extends TServer {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         LOGGER.error("Error occurred during processing of message.", x);
-      }
-
-      if (eventHandler != null) {
-        eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-      }
-
-      if (inputTransport != null) {
-        inputTransport.close();
-      }
-
-      if (outputTransport != null) {
-        outputTransport.close();
-      }
-
-      if (client_.isOpen()) {
-        client_.close();
+      } finally {
+        if (eventHandler != null) {
+          eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+        }
+        if (inputTransport != null) {
+          inputTransport.close();
+        }
+        if (outputTransport != null) {
+          outputTransport.close();
+        }
+        if (client_.isOpen()) {
+          client_.close();
+        }
       }
     }
   }

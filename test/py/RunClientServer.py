@@ -55,14 +55,13 @@ SCRIPTS = ['TSimpleJSONProtocolTest.py',
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
 SKIP_SSL = ['TNonblockingServer', 'THttpServer']
-EXTRA_DELAY = dict(TProcessPoolServer=3.5)
+EXTRA_DELAY = dict(TProcessPoolServer=5.5)
 
 PROTOS= [
     'accel',
     'binary',
-    'compact']
-# FIXME: add json
-# disabled because json HTTP test hangs... why?
+    'compact',
+    'json']
 
 SERVERS = [
   "TSimpleServer",

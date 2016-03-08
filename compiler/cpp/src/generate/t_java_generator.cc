@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <cctype>
@@ -36,6 +37,8 @@
 using std::map;
 using std::ofstream;
 using std::ostringstream;
+using std::setfill;
+using std::setw;
 using std::string;
 using std::stringstream;
 using std::vector;
@@ -87,6 +90,15 @@ public:
 
     iter = parsed_options.find("option_type");
     use_option_type_ = (iter != parsed_options.end());
+
+    iter = parsed_options.find("generated_annotations");
+    if (iter != parsed_options.end()) {
+      undated_generated_annotations_  = (iter->second.compare("undated") == 0);
+      suppress_generated_annotations_ = (iter->second.compare("suppress") == 0);
+    } else {
+      undated_generated_annotations_  = false;
+      suppress_generated_annotations_ = false;
+    }
 
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
   }
@@ -340,6 +352,9 @@ private:
   bool sorted_containers_;
   bool reuse_objects_;
   bool use_option_type_;
+  bool undated_generated_annotations_;
+  bool suppress_generated_annotations_;
+  
 };
 
 /**
@@ -389,14 +404,20 @@ string t_java_generator::java_package() {
 string t_java_generator::java_type_imports() {
   string hash_builder;
   string tree_set_and_map;
+  string annotation_generated;
+
   string option;
   if (sorted_containers_) {
     tree_set_and_map = string() + "import java.util.TreeSet;\n" + "import java.util.TreeMap;\n";
   }
 
   if (use_option_type_) {
-    option = string() +
-      "import org.apache.thrift.Option;\n";
+    option = string() + "import org.apache.thrift.Option;\n";
+  }
+
+  // android does not support @Generated Annotation
+  if (!suppress_generated_annotations_) {
+    annotation_generated = string() + "import javax.annotation.Generated;\n";
   }
 
   return string() + hash_builder + "import org.apache.thrift.scheme.IScheme;\n"
@@ -415,7 +436,7 @@ string t_java_generator::java_type_imports() {
          + "import java.util.HashSet;\n" + "import java.util.EnumSet;\n" + tree_set_and_map
          + "import java.util.Collections;\n" + "import java.util.BitSet;\n"
          + "import java.nio.ByteBuffer;\n"
-           "import java.util.Arrays;\n" + "import javax.annotation.Generated;\n"
+         + "import java.util.Arrays;\n" + annotation_generated
          + "import org.slf4j.Logger;\n" + "import org.slf4j.LoggerFactory;\n\n";
 }
 
@@ -697,8 +718,11 @@ string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << type->get_program()->get_namespace("java") << "."
-           << value->get_identifier_with_parent();
+    std::string namespace_prefix = type->get_program()->get_namespace("java");
+    if (namespace_prefix.length() > 0) {
+      namespace_prefix += ".";
+    }
+    render << namespace_prefix << value->get_identifier_with_parent();
   } else {
     string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
@@ -1324,7 +1348,7 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
 
-  if (!in_class) {
+  if (!in_class && !suppress_generated_annotations_) {
     generate_javax_generated_annotation(out);
   }
 
@@ -2158,8 +2182,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         out << get_cap_name("size() {") << endl;
 
         indent_up();
-        indent(out) << "return (this." << field_name << " == null) ? 0 : " <<
-           "this." << field_name << ".size();" << endl;
+        indent(out) << "return (this." << field_name << " == null) ? 0 : "
+                    << "this." << field_name << ".size();" << endl;
         indent_down();
         indent(out) << "}" << endl << endl;
       }
@@ -2175,8 +2199,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
 
       // Iterator getter for sets and lists
       if (optional) {
-        indent(out) << "public Option<java.util.Iterator<" <<
-          type_name(element_type, true, false) <<  ">> get" << cap_name;
+        indent(out) << "public Option<java.util.Iterator<" << type_name(element_type, true, false)
+                    << ">> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
 
         indent_up();
@@ -2192,13 +2216,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent_down();
         indent(out) << "}" << endl << endl;
       } else {
-        indent(out) << "public java.util.Iterator<" <<
-          type_name(element_type, true, false) <<  "> get" << cap_name;
+        indent(out) << "public java.util.Iterator<" << type_name(element_type, true, false)
+                    << "> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
 
         indent_up();
-        indent(out) << "return (this." << field_name << " == null) ? null : " <<
-          "this." << field_name << ".iterator();" << endl;
+        indent(out) << "return (this." << field_name << " == null) ? null : "
+                    << "this." << field_name << ".iterator();" << endl;
         indent_down();
         indent(out) << "}" << endl << endl;
       }
@@ -2258,8 +2282,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     } else {
       if (optional) {
         indent(out) << "public Option<" << type_name(type, true) << ">";
-        if (type->is_base_type() &&
-            ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
+        if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
         } else {
           out << " get";
@@ -2280,8 +2303,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         indent(out) << "}" << endl << endl;
       } else {
         indent(out) << "public " << type_name(type);
-        if (type->is_base_type() &&
-            ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
+        if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
         } else {
           out << " get";
@@ -2420,7 +2442,20 @@ void t_java_generator::generate_java_struct_tostring(ofstream& out, t_struct* ts
       indent_up();
     }
 
-    if (field->get_type()->is_base_type() && ((t_base_type*)(field->get_type()))->is_binary()) {
+    if (get_true_type(field->get_type())->is_base_type()
+        && ((t_base_type*)(get_true_type(field->get_type())))->is_binary()) {
+      indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
+                  << endl;
+    } else if ((field->get_type()->is_set())
+               && (get_true_type(((t_set*)field->get_type())->get_elem_type())->is_base_type())
+               && (((t_base_type*)get_true_type(((t_set*)field->get_type())->get_elem_type()))
+                       ->is_binary())) {
+      indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
+                  << endl;
+    } else if ((field->get_type()->is_list())
+               && (get_true_type(((t_list*)field->get_type())->get_elem_type())->is_base_type())
+               && (((t_base_type*)get_true_type(((t_list*)field->get_type())->get_elem_type()))
+                       ->is_binary())) {
       indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
                   << endl;
     } else {
@@ -2615,7 +2650,9 @@ void t_java_generator::generate_service(t_service* tservice) {
 
   f_service_ << autogen_comment() << java_package() << java_type_imports() << java_suppressions();
 
-  generate_javax_generated_annotation(f_service_);
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_service_);
+  }
   f_service_ << "public class " << service_name_ << " {" << endl << endl;
   indent_up();
 
@@ -3665,14 +3702,13 @@ void t_java_generator::generate_deserialize_map_element(ofstream& out,
 
   indent(out) << prefix << ".put(" << key << ", " << val << ");" << endl;
 
-  if ( reuse_objects_ && !get_true_type(fkey.get_type())->is_base_type()) {
+  if (reuse_objects_ && !get_true_type(fkey.get_type())->is_base_type()) {
     indent(out) << key << " = null;" << endl;
   }
 
-  if ( reuse_objects_ && !get_true_type(fval.get_type())->is_base_type()) {
+  if (reuse_objects_ && !get_true_type(fval.get_type())->is_base_type()) {
     indent(out) << val << " = null;" << endl;
   }
-
 }
 
 /**
@@ -3699,10 +3735,9 @@ void t_java_generator::generate_deserialize_set_element(ofstream& out,
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
 
-  if ( reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
+  if (reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
     indent(out) << elem << " = null;" << endl;
   }
-
 }
 
 /**
@@ -3729,10 +3764,9 @@ void t_java_generator::generate_deserialize_list_element(ofstream& out,
 
   indent(out) << prefix << ".add(" << elem << ");" << endl;
 
-  if ( reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
+  if (reuse_objects_ && !get_true_type(felem.get_type())->is_base_type()) {
     indent(out) << elem << " = null;" << endl;
   }
-
 }
 
 /**
@@ -4707,7 +4741,7 @@ void t_java_generator::generate_java_struct_clear(std::ofstream& out, t_struct* 
       if (reuse_objects_ && (t->is_container() || t->is_struct())) {
         indent(out) << "if (this." << field->get_name() << " != null) {" << endl;
         indent_up();
-          indent(out) << "this." << field->get_name() << ".clear();" << endl;
+        indent(out) << "this." << field->get_name() << ".clear();" << endl;
         indent_down();
         indent(out) << "}" << endl;
 
@@ -5079,9 +5113,14 @@ void t_java_generator::generate_java_struct_tuple_scheme(ofstream& out, t_struct
 void t_java_generator::generate_javax_generated_annotation(ofstream& out) {
   time_t seconds = time(NULL);
   struct tm* now = localtime(&seconds);
-  indent(out) << "@Generated(value = \"" << autogen_summary() << "\", date = \""
-              << (now->tm_year + 1900) << "-" << (now->tm_mon + 1) << "-" << now->tm_mday << "\")"
-              << endl;
+  indent(out) << "@Generated(value = \"" << autogen_summary() << "\"";
+  if (undated_generated_annotations_) {
+    out << ")" << endl;
+  } else {
+    indent(out) << ", date = \"" << (now->tm_year + 1900) << "-" << setfill('0') << setw(2)
+                << (now->tm_mon + 1) << "-" << setfill('0') << setw(2) << now->tm_mday
+                << "\")" << endl;
+  }
 }
 
 THRIFT_REGISTER_GENERATOR(
@@ -5101,4 +5140,7 @@ THRIFT_REGISTER_GENERATOR(
     "(read and write).\n"
     "    sorted_containers:\n"
     "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
-    "set/map.\n")
+    "set/map.\n"
+    "    generated_annotations=[undated|suppress]:\n"
+    "                     undated: suppress the date at @Generated annotations\n"
+    "                     suppress: suppress @Generated annotations entirely\n")

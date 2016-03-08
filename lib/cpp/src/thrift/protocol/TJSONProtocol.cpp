@@ -509,10 +509,8 @@ uint32_t TJSONProtocol::writeJSONInteger(NumberType num) {
   return result;
 }
 
-namespace
-{
-std::string doubleToString(double d)
-{
+namespace {
+std::string doubleToString(double d) {
   std::ostringstream str;
   str.imbue(std::locale::classic());
   str.precision(std::numeric_limits<double>::digits10 + 1);
@@ -808,7 +806,7 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
   try {
     num = boost::lexical_cast<NumberType>(str);
   } catch (boost::bad_lexical_cast e) {
-    throw new TProtocolException(TProtocolException::INVALID_DATA,
+    throw TProtocolException(TProtocolException::INVALID_DATA,
                                  "Expected numeric value; got \"" + str + "\"");
   }
   if (context_->escapeNum()) {
@@ -817,10 +815,8 @@ uint32_t TJSONProtocol::readJSONInteger(NumberType& num) {
   return result;
 }
 
-namespace
-{
-double stringToDouble(const std::string& s)
-{
+namespace {
+double stringToDouble(const std::string& s) {
   double d;
   std::istringstream str(s);
   str.imbue(std::locale::classic());
@@ -847,13 +843,13 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     } else {
       if (!context_->escapeNum()) {
         // Throw exception -- we should not be in a string in this case
-        throw new TProtocolException(TProtocolException::INVALID_DATA,
+        throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Numeric data unexpectedly quoted");
       }
       try {
         num = stringToDouble(str);
       } catch (std::runtime_error e) {
-        throw new TProtocolException(TProtocolException::INVALID_DATA,
+        throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
       }
     }
@@ -866,7 +862,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     try {
       num = stringToDouble(str);
     } catch (std::runtime_error e) {
-      throw new TProtocolException(TProtocolException::INVALID_DATA,
+      throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
     }
   }

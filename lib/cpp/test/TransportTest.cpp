@@ -16,8 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include "config.h"
+
 #include <stdlib.h>
 #include <time.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #include <sstream>
 #include <fstream>
 #include <thrift/cxxfunctional.h>
@@ -27,6 +33,7 @@
 #include <boost/random.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/version.hpp>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TFDTransport.h>
@@ -913,6 +920,12 @@ public:
                 rand4k);
   }
 
+#if (BOOST_VERSION >= 105900)
+#define MAKE_TEST_CASE(_FUNC, _NAME) boost::unit_test::make_test_case(_FUNC, _NAME, __FILE__, __LINE__)
+#else
+#define MAKE_TEST_CASE(_FUNC, _NAME) boost::unit_test::make_test_case(_FUNC, _NAME)
+#endif
+
 private:
   template <class CoupledTransports>
   void addTestRW(const char* transport_name,
@@ -931,7 +944,11 @@ private:
          << rSizeGen.describe() << ", " << wChunkSizeGen.describe() << ", "
          << rChunkSizeGen.describe() << ", " << maxOutstanding << ")";
 
+#if (BOOST_VERSION >= 105900)
+    boost::function<void ()> test_func
+#else
     boost::unit_test::callback0<> test_func
+#endif
         = apache::thrift::stdcxx::bind(test_rw<CoupledTransports>,
                                        totalSize,
                                        wSizeGen,
@@ -939,39 +956,30 @@ private:
                                        wChunkSizeGen,
                                        rChunkSizeGen,
                                        maxOutstanding);
-    boost::unit_test::test_case* tc = boost::unit_test::make_test_case(test_func, name.str());
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_func, name.str()), expectedFailures);
   }
 
   template <class CoupledTransports>
   void addTestBlocking(const char* transportName, uint32_t expectedFailures = 0) {
     char name[1024];
-    boost::unit_test::test_case* tc;
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available()", transportName);
-    tc = boost::unit_test::make_test_case(test_read_part_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_read_part_available<CoupledTransports>, name), expectedFailures);
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available_in_chunks()", transportName);
-    tc = boost::unit_test::make_test_case(test_read_part_available_in_chunks<CoupledTransports>,
-                                          name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_read_part_available_in_chunks<CoupledTransports>, name), expectedFailures);
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_partial_midframe()", transportName);
-    tc = boost::unit_test::make_test_case(test_read_partial_midframe<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_read_partial_midframe<CoupledTransports>, name), expectedFailures);
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_none_available()", transportName);
-    tc = boost::unit_test::make_test_case(test_read_none_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_read_none_available<CoupledTransports>, name), expectedFailures);
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_part_available()", transportName);
-    tc = boost::unit_test::make_test_case(test_borrow_part_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_borrow_part_available<CoupledTransports>, name), expectedFailures);
 
     THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_none_available()", transportName);
-    tc = boost::unit_test::make_test_case(test_borrow_none_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    suite_->add(MAKE_TEST_CASE(test_borrow_none_available<CoupledTransports>, name), expectedFailures);
   }
 
   boost::unit_test::test_suite* suite_;
@@ -1010,7 +1018,11 @@ struct global_fixture {
   }
 };
 
+#if (BOOST_VERSION >= 105900)
+BOOST_GLOBAL_FIXTURE(global_fixture);
+#else
 BOOST_GLOBAL_FIXTURE(global_fixture)
+#endif
 
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);

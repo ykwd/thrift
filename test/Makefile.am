@@ -18,31 +18,38 @@
 #
 
 SUBDIRS =
+PRECROSS_TARGET =
 
 if WITH_C_GLIB
 SUBDIRS += c_glib
+PRECROSS_TARGET += precross-c_glib
 endif
 
 if WITH_CPP
 SUBDIRS += cpp
+PRECROSS_TARGET += precross-cpp
 endif
 
 if WITH_PERL
 SUBDIRS += perl
+PRECROSS_TARGET += precross-perl
 endif
 
 if WITH_PHP
 SUBDIRS += php
+PRECROSS_TARGET += precross-php
 endif
 
 if WITH_PYTHON
 SUBDIRS += py
+PRECROSS_TARGET += precross-py
 SUBDIRS += py.twisted
 SUBDIRS += py.tornado
 endif
 
 if WITH_RUBY
 SUBDIRS += rb
+PRECROSS_TARGET += precross-rb
 endif
 
 if WITH_HASKELL
@@ -55,6 +62,7 @@ endif
 
 if WITH_GO
 SUBDIRS += go
+PRECROSS_TARGET += precross-go
 endif
 
 if WITH_ERLANG
@@ -67,10 +75,13 @@ endif
 check-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
 
+clean-local:
+	rm -rf $(top_srcdir)/test/gen-html
+
 EXTRA_DIST = \
+	audit \
+	crossrunner \
 	keys \
-	test.py \
-	tests.json \
 	c_glib \
 	cpp \
 	erl \
@@ -90,8 +101,11 @@ EXTRA_DIST = \
 	DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
+	EnumTest.thrift \
+	known_failures_Linux.json \
 	Include.thrift \
 	JavaBeansTest.thrift \
+	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
 	NameConflictTest.thrift \
@@ -100,10 +114,15 @@ EXTRA_DIST = \
 	ReuseObjects.thrift \
 	SmallTest.thrift \
 	StressTest.thrift \
+	test.py \
+	tests.json \
 	ThriftTest.thrift \
+	TypedefTest.thrift \
 	FastbinaryTest.py \
-	README.md
+	result.html \
+	README.md \
+	valgrind.suppress
 
 precross-%:
 	$(MAKE) -C $* precross
-precross: precross-py precross-rb precross-c_glib precross-cpp precross-perl precross-php precross-go
+precross: $(PRECROSS_TARGET)

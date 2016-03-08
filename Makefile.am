@@ -43,8 +43,17 @@ precross-%: all
 precross: all precross-test precross-lib
 
 # TODO: generate --server and --client switches from "--with(out)-..." build flags
+
+
+empty :=
+space := $(empty) $(empty)
+comma := ,
+
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@
+CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
+
 cross: precross
-	$(PYTHON) test/test.py -s
+	$(PYTHON) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
 
 TIMES = 1 2 3
 fail: precross
@@ -72,24 +81,28 @@ codespell_skip_files = \
 	rebar \
 	thrift
 
-empty :=
-space := $(empty) $(empty)
-comma := ,
-
 skipped_files = $(subst $(space),$(comma),$(codespell_skip_files))
 
 style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
 EXTRA_DIST = \
+	.clang-format \
+	.editorconfig \
 	.travis.yml \
+	appveyor.yml \
 	bower.json \
+	build \
+	CMakeLists.txt \
 	composer.json \
 	contrib \
+	CONTRIBUTING.md \
 	debian \
 	doc \
 	doap.rdf \
+	json-schema.json \
 	package.json \
+	rat_exclude \
 	sonar-project.properties \
 	LICENSE \
 	CHANGES \

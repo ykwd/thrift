@@ -43,6 +43,8 @@
 #pragma warning(disable:4102)
 //avoid isatty redefinition
 #define YY_NEVER_INTERACTIVE 1
+
+#define YY_NO_UNISTD_H 1
 #endif
 
 #include <cassert>
@@ -104,7 +106,7 @@ void unexpected_token(char* text) {
  */
 
 intconstant   ([+-]?[0-9]+)
-hexconstant   ("0x"[0-9A-Fa-f]+)
+hexconstant   ([+-]?"0x"[0-9A-Fa-f]+)
 dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier    ([a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*)
 whitespace    ([ \t\r\n]*)
@@ -237,6 +239,7 @@ literal_begin (['\"])
 "float"              { thrift_reserved_keyword(yytext); }
 "for"                { thrift_reserved_keyword(yytext); }
 "foreach"            { thrift_reserved_keyword(yytext); }
+"from"               { thrift_reserved_keyword(yytext); }
 "function"           { thrift_reserved_keyword(yytext); }
 "global"             { thrift_reserved_keyword(yytext); }
 "goto"               { thrift_reserved_keyword(yytext); }
@@ -256,6 +259,7 @@ literal_begin (['\"])
 "nil"                { thrift_reserved_keyword(yytext); }
 "not"                { thrift_reserved_keyword(yytext); }
 "or"                 { thrift_reserved_keyword(yytext); }
+"package"            { thrift_reserved_keyword(yytext); }
 "pass"               { thrift_reserved_keyword(yytext); }
 "public"             { thrift_reserved_keyword(yytext); }
 "print"              { thrift_reserved_keyword(yytext); }
@@ -305,7 +309,12 @@ literal_begin (['\"])
 
 {hexconstant} {
   errno = 0;
-  yylval.iconst = strtoll(yytext+2, NULL, 16);
+  char sign = yytext[0];
+  int shift = sign == '0' ? 2 : 3;
+  yylval.iconst = strtoll(yytext+shift, NULL, 16);
+  if (sign == '-') {
+    yylval.iconst = -yylval.iconst;
+  }
   if (errno == ERANGE) {
     integer_overflow(yytext);
   }

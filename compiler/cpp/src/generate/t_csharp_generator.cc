@@ -909,6 +909,10 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
   indent(out) << "public void Read (TProtocol iprot)" << endl;
   scope_up(out);
 
+  out << indent() << "iprot.IncrementRecursionDepth();" << endl;
+  out << indent() << "try" << endl;
+  scope_up(out);
+
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -977,6 +981,12 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
     }
   }
 
+  scope_down(out);
+  out << indent() << "finally" << endl;
+  scope_up(out);
+  out << indent() << "iprot.DecrementRecursionDepth();" << endl;
+  scope_down(out);
+
   indent_down();
 
   indent(out) << "}" << endl << endl;
@@ -985,6 +995,10 @@ void t_csharp_generator::generate_csharp_struct_reader(ofstream& out, t_struct* 
 void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* tstruct) {
   out << indent() << "public void Write(TProtocol oprot) {" << endl;
   indent_up();
+  
+  out << indent() << "oprot.IncrementRecursionDepth();" << endl;
+  out << indent() << "try" << endl;
+  scope_up(out);
 
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
@@ -1030,14 +1044,24 @@ void t_csharp_generator::generate_csharp_struct_writer(ofstream& out, t_struct* 
   indent(out) << "oprot.WriteFieldStop();" << endl;
   indent(out) << "oprot.WriteStructEnd();" << endl;
 
-  indent_down();
+  scope_down(out);
+  out << indent() << "finally" << endl;
+  scope_up(out);
+  out << indent() << "oprot.DecrementRecursionDepth();" << endl;
+  scope_down(out);
 
+  indent_down();
+  
   indent(out) << "}" << endl << endl;
 }
 
 void t_csharp_generator::generate_csharp_struct_result_writer(ofstream& out, t_struct* tstruct) {
   indent(out) << "public void Write(TProtocol oprot) {" << endl;
   indent_up();
+
+  out << indent() << "oprot.IncrementRecursionDepth();" << endl;
+  out << indent() << "try" << endl;
+  scope_up(out);
 
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
@@ -1091,6 +1115,12 @@ void t_csharp_generator::generate_csharp_struct_result_writer(ofstream& out, t_s
 
   out << endl << indent() << "oprot.WriteFieldStop();" << endl << indent()
       << "oprot.WriteStructEnd();" << endl;
+
+  scope_down(out);
+  out << indent() << "finally" << endl;
+  scope_up(out);
+  out << indent() << "oprot.DecrementRecursionDepth();" << endl;
+  scope_down(out);
 
   indent_down();
 
@@ -1249,6 +1279,11 @@ void t_csharp_generator::generate_csharp_union_class(std::ofstream& out,
   indent(out) << "}" << endl;
   indent(out) << "public override void Write(TProtocol oprot) {" << endl;
   indent_up();
+
+  out << indent() << "oprot.IncrementRecursionDepth();" << endl;
+  out << indent() << "try" << endl;
+  scope_up(out);
+
   indent(out) << "TStruct struc = new TStruct(\"" << tunion->get_name() << "\");" << endl;
   indent(out) << "oprot.WriteStructBegin(struc);" << endl;
 
@@ -1264,6 +1299,13 @@ void t_csharp_generator::generate_csharp_union_class(std::ofstream& out,
   indent(out) << "oprot.WriteFieldStop();" << endl;
   indent(out) << "oprot.WriteStructEnd();" << endl;
   indent_down();
+
+  scope_down(out);
+  out << indent() << "finally" << endl;
+  scope_up(out);
+  out << indent() << "oprot.DecrementRecursionDepth();" << endl;
+  scope_down(out);
+
   indent(out) << "}" << endl;
 
   indent_down();
@@ -1719,7 +1761,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       scope_up(f_service_);
 
       t_struct* xs = (*f_iter)->get_xceptions();
-      prepare_member_name_mapping(xs,xs->get_members(),resultname);
+      prepare_member_name_mapping(xs, xs->get_members(), resultname);
 
       f_service_ << indent() << "TMessage msg = iprot_.ReadMessageBegin();" << endl << indent()
                  << "if (msg.Type == TMessageType.Exception) {" << endl;
@@ -1945,7 +1987,7 @@ void t_csharp_generator::generate_process_function(t_service* tservice, t_functi
   if (!tfunction->is_oneway() && xceptions.size() > 0) {
     indent_down();
     f_service_ << indent() << "}";
-    prepare_member_name_mapping(xs,xs->get_members(),resultname);
+    prepare_member_name_mapping(xs, xs->get_members(), resultname);
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
       f_service_ << " catch (" << type_name((*x_iter)->get_type(), false, false) << " "
                  << (*x_iter)->get_name() << ") {" << endl;
@@ -1987,6 +2029,11 @@ void t_csharp_generator::generate_csharp_union_reader(std::ofstream& out, t_stru
 
   indent(out) << "public static " << tunion->get_name() << " Read(TProtocol iprot)" << endl;
   scope_up(out);
+
+  out << indent() << "iprot.IncrementRecursionDepth();" << endl;
+  out << indent() << "try" << endl;
+  scope_up(out);
+
   indent(out) << tunion->get_name() << " retval;" << endl;
   indent(out) << "iprot.ReadStructBegin();" << endl;
   indent(out) << "TField field = iprot.ReadFieldBegin();" << endl;
@@ -2036,12 +2083,15 @@ void t_csharp_generator::generate_csharp_union_reader(std::ofstream& out, t_stru
 
   // end of else for TStop
   scope_down(out);
-
   indent(out) << "iprot.ReadStructEnd();" << endl;
-
   indent(out) << "return retval;" << endl;
-
   indent_down();
+
+  scope_down(out);
+  out << indent() << "finally" << endl;
+  scope_up(out);
+  out << indent() << "iprot.DecrementRecursionDepth();" << endl;
+  scope_down(out);
 
   indent(out) << "}" << endl << endl;
 }
@@ -2512,11 +2562,10 @@ void t_csharp_generator::prepare_member_name_mapping(void* scope,
   // current C# generator policy:
   // - prop names are always rendered with an Uppercase first letter
   // - struct names are used as given
-  
-  
+
   // prevent name conflicts with struct (CS0542 error)
   used_member_names.insert(structname);
-  
+
   // prevent name conflicts with known methods (THRIFT-2942)
   used_member_names.insert("Read");
   used_member_names.insert("Write");

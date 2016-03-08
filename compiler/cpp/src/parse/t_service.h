@@ -39,7 +39,7 @@ public:
 
   void add_function(t_function* func) {
     std::vector<t_function*>::const_iterator iter;
-    for (iter = functions_.begin(); iter != functions_.end(); iter++) {
+    for (iter = functions_.begin(); iter != functions_.end(); ++iter) {
       if (func->get_name() == (*iter)->get_name()) {
         throw "Function " + func->get_name() + " is already defined";
       }
@@ -50,11 +50,6 @@ public:
   const std::vector<t_function*>& get_functions() const { return functions_; }
 
   t_service* get_extends() { return extends_; }
-
-  virtual std::string get_fingerprint_material() const {
-    // Services should never be used in fingerprints.
-    throw "BUG: Can't get fingerprint material for service.";
-  }
 
 private:
   std::vector<t_function*> functions_;

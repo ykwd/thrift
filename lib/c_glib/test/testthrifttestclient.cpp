@@ -67,6 +67,10 @@ class TestHandler : public ThriftTestIf {
     out = thing;
   }
 
+  bool testBool(const bool thing) {
+    printf("[C -> C++] testBool(%s)\n", thing ? "true" : "false");
+    return thing;
+  }
   int8_t testByte(const int8_t thing) {
     printf("[C -> C++] testByte(%d)\n", (int)thing);
     return thing;
@@ -191,6 +195,8 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testInsanity(map<UserId, map<Numberz::type,Insanity> > &insane, const Insanity &argument) {
+    THRIFT_UNUSED_VARIABLE (argument);
+
     printf("[C -> C++] testInsanity()\n");
 
     Xtruct hello;
@@ -260,6 +266,10 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testMulti(Xtruct &hello, const int8_t arg0, const int32_t arg1, const int64_t arg2, const std::map<int16_t, std::string>  &arg3, const Numberz::type arg4, const UserId arg5) {
+    THRIFT_UNUSED_VARIABLE (arg3);
+    THRIFT_UNUSED_VARIABLE (arg4);
+    THRIFT_UNUSED_VARIABLE (arg5);
+
     printf("[C -> C++] testMulti()\n");
 
     hello.string_thing = "Hello2";
@@ -317,6 +327,8 @@ class TestHandler : public ThriftTestIf {
 // C CLIENT
 extern "C" {
 
+#undef THRIFT_SOCKET /* from lib/cpp */
+
 #include "t_test_thrift_test.h"
 #include "t_test_thrift_test_types.h"
 #include <thrift/c_glib/transport/thrift_socket.h>
@@ -352,8 +364,10 @@ test_thrift_client (void)
   TTestXception *xception = NULL;
   TTestXception2 *xception2 = NULL;
 
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   // initialize gobject
   g_type_init ();
+#endif
 
   // create a C client
   tsocket = (ThriftSocket *) g_object_new (THRIFT_TYPE_SOCKET, 
@@ -526,8 +540,7 @@ test_thrift_client (void)
   assert (t_test_thrift_test_client_test_exception (iface, "ApplicationException", &xception, &error) == FALSE);
   g_error_free (error);
   error = NULL;
-  g_object_unref (xception);
-  xception = NULL;
+  assert (xception == NULL);
 
   assert (t_test_thrift_test_client_test_exception (iface, "Test", &xception, &error) == TRUE);
   assert (error == NULL);
@@ -579,11 +592,13 @@ test_thrift_client (void)
 static void
 bailout (int signum)
 {
+  THRIFT_UNUSED_VARIABLE (signum);
+
   exit (1);
 }
 
 int
-main (int argc, char **argv)
+main (void)
 {
   int status;
   int pid = fork ();
@@ -591,11 +606,11 @@ main (int argc, char **argv)
 
   if (pid == 0) /* child */
   {
-    shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    shared_ptr<TestHandler> testHandler(new TestHandler());
-    shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
-    shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
-    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    boost::shared_ptr<TestHandler> testHandler(new TestHandler());
+    boost::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+    boost::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
+    boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     TSimpleServer simpleServer(testProcessor, serverSocket, transportFactory, protocolFactory);
     signal (SIGALRM, bailout);
     alarm (60);
@@ -604,7 +619,7 @@ main (int argc, char **argv)
     sleep (1);
     test_thrift_client ();
     kill (pid, SIGINT);
-    wait (&status) == pid;
+    assert (wait (&status) == pid);
   }
 
   return 0;

@@ -78,6 +78,11 @@ public:
     out = thing;
   }
 
+  bool testBool(const bool thing) {
+    printf("testBool(%s)\n", thing ? "true" : "false");
+    return thing;
+  }
+
   int8_t testByte(const int8_t thing) {
     printf("testByte(%d)\n", (int)thing);
     return thing;
@@ -304,7 +309,7 @@ public:
     hello.i64_thing = (int64_t)arg2;
   }
 
-  void testException(const std::string& arg) throw(Xception, apache::thrift::TException) {
+  void testException(const std::string& arg) {
     printf("testException(%s)\n", arg.c_str());
     if (arg.compare("Xception") == 0) {
       Xception e;
@@ -323,7 +328,7 @@ public:
 
   void testMultiException(Xtruct& result,
                           const std::string& arg0,
-                          const std::string& arg1) throw(Xception, Xception2) {
+                          const std::string& arg1) {
 
     printf("testMultiException(%s, %s)\n", arg0.c_str(), arg1.c_str());
 
@@ -398,6 +403,11 @@ public:
     cob(res);
   }
 
+  virtual void testBool(tcxx::function<void(bool const& _return)> cob, const bool thing) {
+    bool res = _delegate->testBool(thing);
+    cob(res);
+  }
+
   virtual void testByte(tcxx::function<void(int8_t const& _return)> cob, const int8_t thing) {
     int8_t res = _delegate->testByte(thing);
     cob(res);
@@ -418,7 +428,8 @@ public:
     cob(res);
   }
 
-  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob, const std::string& thing) {
+  virtual void testBinary(tcxx::function<void(std::string const& _return)> cob,
+                          const std::string& thing) {
     std::string res;
     _delegate->testBinary(res, thing);
     cob(res);

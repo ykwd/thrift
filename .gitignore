@@ -31,6 +31,7 @@ Makefile.in
 aclocal.m4
 acinclude.m4
 autom4te.cache
+cmake-*
 node_modules
 compile
 test-driver
@@ -88,16 +89,21 @@ test-driver
 /lib/cpp/test/Benchmark
 /lib/cpp/test/AllProtocolsTest
 /lib/cpp/test/DebugProtoTest
+/lib/cpp/test/DenseProtoTest
 /lib/cpp/test/EnumTest
 /lib/cpp/test/JSONProtoTest
 /lib/cpp/test/OptionalRequiredTest
+/lib/cpp/test/SecurityTest
 /lib/cpp/test/SpecializationTest
 /lib/cpp/test/ReflectionTest
 /lib/cpp/test/RecursiveTest
 /lib/cpp/test/TFDTransportTest
 /lib/cpp/test/TFileTransportTest
+/lib/cpp/test/TInterruptTest
 /lib/cpp/test/TNonblockingServerTest
 /lib/cpp/test/TPipedTransportTest
+/lib/cpp/test/TServerIntegrationTest
+/lib/cpp/test/TSocketInterruptTest
 /lib/cpp/test/TransportTest
 /lib/cpp/test/UnitTests
 /lib/cpp/test/ZlibTest
@@ -121,6 +127,7 @@ test-driver
 /lib/c_glib/test/testapplicationexception
 /lib/c_glib/test/testbinaryprotocol
 /lib/c_glib/test/testbufferedtransport
+/lib/c_glib/test/testcontainertest
 /lib/c_glib/test/testdebugproto
 /lib/c_glib/test/testframedtransport
 /lib/c_glib/test/testmemorybuffer
@@ -175,6 +182,7 @@ test-driver
 /lib/hs/dist
 /lib/java/build
 /lib/js/test/build
+/lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
 /lib/perl/MYMETA.json
@@ -236,6 +244,7 @@ test-driver
 /test/go/gopath
 /test/go/pkg/
 /test/go/src/code.google.com/
+/test/go/src/github.com/golang/
 /test/go/src/gen/
 /test/go/src/thrift
 /test/haxe/bin

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
 
 #ifndef _GNU_SOURCE
@@ -25,15 +24,19 @@
 #endif
 
 #include <stdint.h>
+#ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
+#endif
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <thrift/cxxfunctional.h>
 
+#include <boost/function.hpp>
 #include <boost/random.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/version.hpp>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TZlibTransport.h>
@@ -327,16 +330,28 @@ void test_no_write() {
  * Initialization
  */
 
-#define ADD_TEST_CASE(suite, name, function, ...)                                                  \
+#if (BOOST_VERSION >= 105900)
+#define ADD_TEST_CASE(suite, name, _FUNC, ...)                                                     \
   do {                                                                                             \
     ::std::ostringstream name_ss;                                                                  \
-    name_ss << name << "-" << BOOST_STRINGIZE(function);                                           \
+    name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
+    boost::function<void ()> test_func = ::apache::thrift::stdcxx::bind(_FUNC, ##__VA_ARGS__);     \
     ::boost::unit_test::test_case* tc                                                              \
-        = ::boost::unit_test::make_test_case(::apache::thrift::stdcxx::bind(function,              \
+        = ::boost::unit_test::make_test_case(test_func, name_ss.str(), __FILE__, __LINE__);        \
+    (suite)->add(tc);                                                                              \
+  } while (0)
+#else
+#define ADD_TEST_CASE(suite, name, _FUNC, ...)                                                     \
+  do {                                                                                             \
+    ::std::ostringstream name_ss;                                                                  \
+    name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
+    ::boost::unit_test::test_case* tc                                                              \
+        = ::boost::unit_test::make_test_case(::apache::thrift::stdcxx::bind(_FUNC,                 \
                                                                             ##__VA_ARGS__),        \
                                              name_ss.str());                                       \
     (suite)->add(tc);                                                                              \
   } while (0)
+#endif
 
 void add_tests(boost::unit_test::test_suite* suite,
                const boost::shared_array<uint8_t>& buf,
@@ -401,7 +416,9 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
   uint32_t seed = static_cast<uint32_t>(time(NULL));
+#ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
+#endif
   rng.seed(seed);
 
   boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();

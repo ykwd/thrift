@@ -21,6 +21,8 @@
 
 language: cpp
 
+sudo: required
+
 cache:
  - apt
  - npm
@@ -35,6 +37,10 @@ before_install:
   - if [ "$ALL_DEPS" != "no" ] ; then sh build/travis/installDependencies.sh 1> /dev/null ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/1.20/bin:$PATH ; fi
   - if [ "$ALL_DEPS" != "no" ] ; then cabal update ; fi
+  # Disabling any cabal concurrent jobs to workaround GHC crashes due to out of memory.
+  # We can safely remove this to speed up cabal install, once Travis infrastructure is upgraded.
+  - if [ "$ALL_DEPS" != "no" ] ; then sed -i 's/^\s*jobs\s*:\s*\$ncpus\s*$/jobs:1/g' $HOME/.cabal/config && cat $HOME/.cabal/config | grep jobs ; fi
+
 
 script:
   - if [ "x$CMAKE_CONFIG" != "xnone" ] ; then mkdir cmake_build && cd cmake_build && cmake -GNinja -DQT_MOC_EXECUTABLE="moq-qt5" $CMAKE_CONFIG $TRAVIS_BUILD_DIR ; fi
@@ -44,6 +50,9 @@ script:
   - if [ "x$CONFIG" != "xnone" ] ; then sh configure $CONFIG ; fi
   - if [ "x$CONFIG" != "xnone" ] ; then make $MAKE_TARGET -j2 ; fi
 
+after_failure:
+  - if [ "x$ERROR_LOG" != "xnone" ] ; then cat $ERROR_LOG ; fi
+
 env:
   global:
     - TEST_NAME=""
@@ -52,6 +61,7 @@ env:
     - MAKE_TARGET="check"
     - ALL_DEPS="no"
     - GHCVER=7.8.3
+    - ERROR_LOG="none"
 
   matrix:
     # Put it here because it's most time consuming
@@ -60,6 +70,7 @@ env:
       CONFIG="--enable-tutorial=no --without-erlang --without-lua --without-haxe --without-d"
       ALL_DEPS="yes"
       MAKE_TARGET="cross"
+      ERROR_LOG="test/log/unexpected_failures.log"
 
     # CMake builds
     - TEST_NAME="compiler (CMake + CPack)"
@@ -72,7 +83,7 @@ env:
     - TEST_NAME="C++/std-threads (CMake + CPack)"
       CMAKE_CONFIG="-DCMAKE_CXX_FLAGS=-std=c++0x -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_STDTHREADS=ON"
     - TEST_NAME="compiler (mingw32-gcc, CMake + CPack)"
-      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
 
     # Autotool builds
     # TODO: Remove them as migration is made
@@ -104,7 +115,7 @@ matrix:
 
     # Does not use native compiler, no need to do it twice
     - compiler: gcc
-      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../contrib/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
+      env: TEST_NAME="compiler (mingw32-gcc, CMake + CPack)" CMAKE_CONFIG="-DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF"
     - compiler: gcc
       env: TEST_NAME="dist (automake)" CONFIG="" ALL_DEPS="yes" MAKE_TARGET="dist"
 
