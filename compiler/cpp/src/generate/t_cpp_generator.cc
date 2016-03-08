@@ -1382,7 +1382,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
       out << " else if ";
     }
 
-    out << "(this->__isset." << (*f_iter)->get_name() << ") {" << endl;
+    out << "(true || this->__isset." << (*f_iter)->get_name() << ") {" << endl;
 
     indent_up();
 
@@ -1663,7 +1663,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   generate_service_client(tservice, "");
   generate_service_processor(tservice, "");
   generate_service_multiface(tservice);
-  generate_service_skeleton(tservice);
+ // generate_service_skeleton(tservice);
   generate_service_client(tservice, "Concurrent");
 
   // Generate all the cob components
