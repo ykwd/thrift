@@ -35,7 +35,7 @@ if(MSVC)
     # the same holds for other libraries like libthriftz etc.
 
     # For Debug build types, append a "d" to the library names.
-    set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
+    set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "Set debug library postfix" FORCE)
     set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
 
     # Build using /MT option instead of /MD if the WITH_MT options is set
