@@ -100,4 +100,8 @@ if(BUILD_PYTHON)
     endif()
 endif()
 
+if(BUILD_CSHARP)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/csharp/src)
+endif()
+
 PRINT_CONFIG_SUMMARY()
