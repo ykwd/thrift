@@ -18,7 +18,7 @@
 #
 
 
-set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
+#set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
 
 
 macro(ADD_LIBRARY_THRIFT name)
