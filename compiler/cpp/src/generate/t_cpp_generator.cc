@@ -42,6 +42,8 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
+int rdsn_inject_flag = 0;
+
 /**
  * C++ code generator. This is legitimacy incarnate.
  *
@@ -932,9 +934,9 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   indent_up();
 
   if (!pointers) {
+    if (!rdsn_inject_flag) {
     // Copy constructor
     indent(out) << tstruct->get_name() << "(const " << tstruct->get_name() << "&);" << endl;
-
     // Move constructor
     if (gen_moveable_) {
       indent(out) << tstruct->get_name() << "(" << tstruct->get_name() << "&&);" << endl;
@@ -948,7 +950,7 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
     if (gen_moveable_) {
       indent(out) << tstruct->get_name() << "& operator=(" << tstruct->get_name() << "&&);" << endl;
     }
-
+    }
     // Default constructor
     indent(out) << tstruct->get_name() << "()";
 
@@ -1674,7 +1676,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     generate_service_null(tservice, "CobSv");
     generate_service_client(tservice, "Cob");
     generate_service_processor(tservice, "Cob");
-    generate_service_async_skeleton(tservice);
+    //generate_service_async_skeleton(tservice);
   }
 
   f_header_ <<
@@ -1720,7 +1722,9 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
 
     // TODO(dreiss): Why is this stuff not in generate_function_helpers?
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_args");
+    rdsn_inject_flag = 1;
     generate_struct_declaration(f_header_, ts, false);
+    rdsn_inject_flag = 0;
     generate_struct_definition(out, f_service_, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
@@ -3101,13 +3105,17 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice, t_function*
     result.append(*f_iter);
   }
 
+  rdsn_inject_flag = 1;
   generate_struct_declaration(f_header_, &result, false);
+  rdsn_inject_flag = 0;
   generate_struct_definition(out, f_service_, &result, false);
   generate_struct_reader(out, &result);
   generate_struct_result_writer(out, &result);
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
+  rdsn_inject_flag = 1;
   generate_struct_declaration(f_header_, &result, false, true, true, gen_cob_style_);
+  rdsn_inject_flag = 0;
   generate_struct_definition(out, f_service_, &result, false);
   generate_struct_reader(out, &result, true);
   if (gen_cob_style_) {
