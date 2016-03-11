@@ -17,6 +17,9 @@ if(NOT EXISTS "${MY_CSC}")
 endif()
 
 set(MY_OUTPUT_PATH "${CMAKE_INSTALL_PREFIX}/lib")
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif ()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${PROJ_NAME}.csproj.template" "${CMAKE_CURRENT_SOURCE_DIR}/${PROJ_NAME}.csproj")
 
