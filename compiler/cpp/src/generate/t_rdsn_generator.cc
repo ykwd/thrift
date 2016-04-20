@@ -103,7 +103,7 @@ void t_rdsn_generator::generate_struct(t_struct* tstruct)
     _f_php << "$tmp = new t_struct($_PROG, \"" << tstruct->get_name() << "\");" << std::endl;
     for (auto& f : tstruct->get_members())
     {
-        _f_php << "$tmp->add_field(\"" << f->get_name() << "\", \"" << get_full_type_name(f->get_type()) << "\");" << std::endl;
+        _f_php << "$tmp->add_field(\"" << f->get_name() << "\", \"" << get_full_type_name(f->get_type()) << "\"," << f->get_key() << ");" << std::endl;
     }
     _f_php << std::endl;
 }
@@ -117,7 +117,7 @@ void t_rdsn_generator::generate_service(t_service* svc)
     {
         _f_php << "$tmp2 = $tmp->add_function(\"" << get_full_type_name(f->get_returntype()) << "\", \"" << f->get_name() << "\");" << std::endl;
         for (auto& p : f->get_arglist()->get_members())
-            _f_php << "$tmp2->add_param(\"" << p->get_name() << "\", \"" << get_full_type_name(p->get_type()) << "\");" << std::endl;
+            _f_php << "$tmp2->add_param(\"" << p->get_name() << "\", \"" << get_full_type_name(p->get_type()) << "\"," << p->get_key() << ");" << std::endl;
     }
     _f_php << std::endl;
 }
